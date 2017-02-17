@@ -5,7 +5,7 @@
 A presentation to the Docker Charlotte Meetup (2017-02-17)
 
 Focusing on:
-  * The history of the use of Docker at Technekes (nib)
+  * The history Docker & Development at Technekes (from devbox to nib)
   * Updates to Docker in 1.13.0 and 1.13.1
   * Updates to Compose File Format v3
 
