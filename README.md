@@ -1,12 +1,10 @@
 # Talks!
 
-To start a talk clone this repo and serve the files:
+### [Standardizing development with Compose](docker/standardizing-development-with-compose.html)
 
-```
-docker                               \
-  run                                \
-  --rm                               \
-  -v $PWD:/usr/local/apache2/htdocs/ \
-  -p 80:80                           \
-  httpd:alpine
-```
+A presentation to the Docker Charlotte Meetup (2017-02-17)
+
+Focusing on:
+  * The history of the use of Docker at Technekes (nib)
+  * Updates to Docker in 1.13.0 and 1.13.1
+  * Updates to Compose File Format v3

@@ -156,12 +156,934 @@
     </style>
   </head>
   <body>
+    <textarea id="source">
+class: center, middle
+<img src="https://a248.e.akamai.net/secure.meetupstatic.com/photos/theme_body/1/f/3/9/full_6847993.jpeg" width="100%" height="100%">
+
+---
+name: inverse
+layout: true
+class: center, middle, inverse
+
+---
+template: inverse
+# Standardizing Development With Compose
+[ @technekes ]
+
+---
+layout: false
+## Overview
+
+.left-column[
+### Who
+]
+
+.right-column[
+Zach Blankenship
+* Software Engineer for Technekes since 2013
+* zach.blankenship@technekes.com
+]
+
+--
+.right-column[
+Michael Geitz
+* Dev/Ops Engineer for Technekes since 2016
+* michael.geitz@technekes.com
+]
+
+---
+## Overview
+
+.left-column[
+### Who
+### What
+]
+
+.right-column[
+* Where we were before Docker
+
+* First Docker
+
+* Then Docker Compose
+
+* Resolving Bad Patterns
+
+* Enforcing Conventions and Standardizing Workflow
+]
+
+--
+.right-column[
+* Docker 1.13
+
+* Compose v3
+]
+
+---
+## Devbox
+
+.left-column[
+### Virtual Box
+]
+
+.right-column[
+VirtualBox is a cross-platform virtualization application
+]
+.footnote[[source](https://www.virtualbox.org/manual/ch01.html)]
+
+--
+.right-column[
+* Developed by Oracle
+* Runs as an application on the Host OS
+* Permits the installation of a Guest OS within a virtial machine
+]
+.footnote[[source](https://www.virtualbox.org/manual/ch01.html)]
+
+---
+## Devbox
+
+.left-column[
+### Virtual Box
+### Vagrant
+]
+
+.right-column[
+Vagrant is an open-source software product for building and maintaining portable virtual development environments
+]
+.footnote[[source](https://www.vagrantup.com/docs/)]
+
+--
+.right-column[
+* Developed by HashiCorp
+* Used to homogenize our development environment between development machines
+]
+.footnote[[source](https://www.vagrantup.com/docs/)]
+
+---
+## Devbox
+
+.left-column[
+### Virtual Box
+### Vagrant
+### Puppet
+]
+
+.right-column[
+Open-source configuration management tool
+]
+.footnote[[source](https://docs.puppet.com/puppet/latest/architecture.html)]
+
+--
+.right-column[
+* Compile and apply a configuration catalog
+* Allows for ubiquitous configuration changes
+* Stand-Alone (masterless)
+]
+.footnote[[source](https://docs.puppet.com/puppet/latest/architecture.html)]
+
+---
+## Devbox
+
+.left-column[
+### Virtual Box
+### Vagrant
+### Puppet
+### Devbox
+]
+
+.right-column[
+So why didn't this work?
+]
+
+--
+.right-column[
+* Monolithic
+* Run everything to change anything
+* Cumbersome
+* Up to several days to get up and running
+* Significant maintenance required
+]
+
+---
+## Docker
+
+.left-column[
+### Containers
+]
+
+.right-column[
+An isolated process with some context
+]
+
+--
+<img src="https://media.giphy.com/media/m0NXgSmZW1wxa/giphy.gif" align="middle" width="700" height="450" style="margin:0px 20px">
+
+.footnote[[source](https://sysadmincasts.com/)]
+
+???
+
+* A hypervisor or virtual machine monitor (VMM) is computer software, firmware, or hardware, that creates and runs virtual machines. A computer on which a hypervisor runs one or more virtual machines is called a host machine, and each virtual machine is called a guest machine
+
+* http://cloudscaling.com/blog/cloud-computing/will-containers-replace-hypervisors-almost-certainly/
+
+---
+## Docker
+
+.left-column[
+### Containers
+]
+
+.right-column[
+An isolated process with some context
+]
+
+.right-column[
+* containerd
+  * Container supervisor
+* runc
+  * Takes OCI config and a filesystem
+]
+
+
+---
+## Docker
+
+.left-column[
+### Containers
+### Process
+]
+
+.right-column[
+Create a Dockerfile
+]
+
+--
+.right-column[
+```xml
+FROM ruby:2.3.3
+
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+COPY Gemfile* ./
+
+RUN bundle install --jobs 4
+
+COPY . /usr/src/app
+
+CMD puma
+```
+]
+
+???
+
+* layers
+* images
+
+--
+.right-column[
+* Identify your dependencies
+* Environment variables and secret management
+]
+
+???
+
+* secret management
+
+---
+## Docker
+
+.left-column[
+### Containers
+### Process
+### Elastic Beanstalk
+]
+
+.right-column[
+AWS Elastic Beanstalk is a PaaS offering by Amazon Web Services
+]
+.footnote[[source](https://aws.amazon.com/elasticbeanstalk/)]
+
+--
+.right-column[
+* Docker support April 2014
+* Our first attempt at Docker
+  * We learned a lot
+]
+.footnote[[source](https://aws.amazon.com/elasticbeanstalk/)]
+
+???
+
+* https://aws.amazon.com/blogs/aws/aws-elastic-beanstalk-for-docker/
+
+* Learned about
+  * images
+  * containers
+
+---
+## Then Docker Compose (Fig)
+
+.left-column[
+### Docker Compose
+]
+
+.right-column[
+Provides a format for defining a set of interelated containers
+]
+
+--
+.right-column[
+* For example a `docker-compose.yml` might contain a `web` service and it's depedencies like `postgres` or `redis`
+]
+
+---
+## Then Docker Compose (Fig)
+
+.left-column[
+### Docker Compose
+]
+
+.right-column[
+```yml
+version: '2'
+
+services:
+  web: &default
+    command: "rails s -p 3000 -b 0.0.0.0"
+    links:
+      - postgres
+      - redis
+    volumes:
+      - .:/usr/src/app
+      - bundle:/usr/local/bundle
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  bundle:
+    driver: local
+```
+]
+
+???
+
+* bundle volume
+* `docker-compose` coordinates starting these services via the remote api
+
+---
+## Then Docker Compose (Fig)
+
+.left-column[
+### Docker Compose
+### Benefits
+]
+
+.right-column[
+This is where we began seeing the most benefits. Each application now has its own development environment, which is..
+]
+
+--
+.right-column[
+* Fast
+* Explicit
+* Isolated
+]
+
+--
+
+<img src="https://media.giphy.com/media/A5pcWMMIEO95S/giphy.gif" align="middle" width="300" height="200">
+
+???
+
+* We needed to mock some integration specs (microservices!)
+* code in same repo
+* cattle vs pets 
+
+---
+## Then Docker Compose (Fig)
+
+.left-column[
+### Docker Compose
+### Benefits
+### Tooling
+]
+
+.right-column[
+Over the course of standardizing development in Docker, we used various tools to bring Docker to Mac
+]
+
+--
+
+.right-column[
+* Boot2Docker w/Docker Machine
+* Dinghy
+* Docker For Mac
+]
+
+???
+
+* Boot2Docker setup a docker machine for local development on the mac
+* Dinghy added
+  * Better filesharing 
+  * Better file system events
+  * DNS / HTTP Proxy!
+* Docker For Mac is now the official solution for developing on the mac
+
+---
+## Retrospective
+
+.left-column[
+### Bad Patterns
+]
+
+.right-column[
+We found that we had some common commands that were being implemented as binstubs
+]
+
+--
+.right-column[
+* bootstrap
+* run
+* console
+* shell
+]
+
+???
+
+* inconsistent use of docker
+* nobody every RTFM
+
+---
+## Retrospective
+
+.left-column[
+### Bad Patterns
+### Solution
+]
+
+.right-column[
+Wrapping Docker Compose
+]
+
+---
+class: center, middle
+<img src="logo.png" align="middle" width="400" height="200" style="margin:0px 20px">
+
+A Docker Compose wrapper geared towards Ruby/Rails development with a focus on:
+convention, convenience and productivity.
+
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+]
+
+.right-column[
+Consider running an interactive shell
+
+```bash
+  docker-compose run --rm web /bin/bash
+```
+]
+
+--
+.right-column[
+The `nib` alternative
+
+```bash
+  nib shell web
+```
+]
+
+--
+.right-column[
+Provides the following:
+
+* Determines your shell
+* Persists your history
+  * IRB
+  * Pry
+  * Shell
+* Ensures removal of the container
+]
+
+???
+
+* `nib` will start up a container for the `web` service and drop you into an interactive shell session (`bash`, `ash` or `sh`) depending on which shell is available.
+
+* `nib` will also hook up a history file for your shell session (relative to the current project). This means that you will be able to use the history (up arrow) in future shell sessions, something that is not available with vanilla docker/docker-compose!
+
+* History is for Shell, Pry and IRB for all interactive commands
+
+* Finally `nib` will ensure that the container is removed after you finish with the shell session
+
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+### Setup
+]
+
+.right-column[
+Consider running a setup script
+
+```bash
+docker-compose run —rm web bin/setup
+```
+]
+
+--
+.right-column[
+The `nib` alternative
+
+```bash
+nib setup web
+```
+]
+
+--
+.right-column[
+Provides a convention for a bootstrap script. `nib` looks for `bin/setup` and in the case that a script isn't provided `nib` assumes you are working in a ruby environment and runs:
+
+```bash
+  gem install bundler
+  bundle install --jobs 4
+```
+]
+
+???
+
+* The `setup` helper is way to positively enforce convention, developers like that they can rely on `bin/setup` for any of our apps
+* And it provides a reasonable default
+
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+### Setup
+### Console
+]
+
+.right-column[
+Consider running a rails console:
+
+```bash
+docker-compose run --rm web rails c
+```
+]
+
+--
+.right-column[
+The `nib` alternative
+
+```bash
+nib console web
+```
+]
+
+--
+.right-column[
+Conditionally puts you into one of the following "consoles" in order of precedence
+
+* `bin/console` (User defined console!)
+* `rails console`
+* `pry -r ./config/boot`
+* `irb -r ./config/boot`
+* `bundle console`
+
+And Hooks up **history**
+]
+
+???
+
+* Similar to `shell`, console figures out what type of console is available and gives you history
+
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+### Setup
+### Console
+### Exec
+]
+
+.right-column[
+Consider exec'ing into a running container:
+
+```bash
+docker-compose exec web /bin/bash
+```
+]
+
+--
+.right-column[
+The `nib` alternative
+
+```bash
+nib exec web
+```
+]
+
+--
+.right-column[
+Has the added benefit of the same `shell` lookup as `console` and persists history
+]
+
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+### Setup
+### Console
+### Exec
+### Run
+]
+
+.right-column[
+Consider running `foo`
+
+```bash
+docker-compose run --rm web foo
+```
+]
+
+--
+.right-column[
+The `nib` alternative
+```bash
+nib run web foo
+```
+]
+
+--
+.right-column[
+Wraps `docker-compose run` ensuring `--rm` is passed
+]
+
+???
+
+* This prevents orphaned containers taking up space!
+---
+## Nib: Commands
+
+.left-column[
+### Shell
+### Setup
+### Console
+### Exec
+### Run
+### Other
+]
+
+.right-column[
+`nib` also has some very specific helpful shortcuts for ruby/rails:
+
+```markdown
+bundle:       Run bundle for the given service
+codeclimate:  Run codeclimate checks on the given service
+debug:        Connect to a running byebug server for a given service
+guard:        Run the guard command for the given service
+rails:        Run the rails command for the given service
+rake:         Run the rake command for the given service
+rspec:        Runs the rspec command for the given service
+rubocop       Runs the rubocop command for the given service
+```
+
+Any command that `nib` does not recognize is **delegated** to `docker-compose`
+
+`nib up` is the same as `docker-compose up`
+]
+
+???
+
+* For each of these `nib` supports passing parameters, so you can do things like `nib rake web db:migrate`
+* codeclimate pulls the codeclimate docker images and runs their linters against pwd
+* bundle is the same as `docker-compose run --rm web bundle install -j 4`
+* debug requires some special configuration, see the README
+
+---
+## Nib: The Tip of the Pen
+
+.left-column[
+### Evolution
+### Bash
+]
+
+.right-column[
+
+The first incarnation of `nib` was a container invoked with an alias:
+
+```bash
+alias nib='
+  docker run \
+    -it \
+    --rm \
+    -v $(pwd):$(pwd) \
+    -w $(pwd) \
+    -v $HOME/.docker:/root/.docker:ro \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -e "DOCKER_HOST_URL=$DOCKER_HOST" \
+    technekes/nib'
+```
+]
+
+???
+
+`nib` was a set of bash scripts that the image had as its entrypoint
+
+---
+## Nib: The Tip of the Pen
+
+.left-column[
+### Evolution
+### Bash
+### Ruby
+]
+
+.right-column[
+We added integration and unit specs (rspec) which eventually allowed us to transition `nib` to ruby and it's now released as a gem
+
+```bash
+gem install nib
+```
+]
+
+???
+
+* `nib` is developed in a `docker-compose` environment when specs are run a container is started that installs the source from the host as a gem inside the container
+* Unit specs expect a certain "command" string to be generated
+* Integration specs execute the commands and either attach to the tty or expect certain output
+  * This is acheived by bind mounting the docker socket in the `docker-compose.yml`
+
+* It's interesting to note that `docker-compose` is a good engine for facilitating polyglot integration testing
+
+---
+# How This Helped Our Workflow
+
+* Enforces Conventions
+* It's Convenient and Ergonomic
+
+???
+
+* Spend less time worrying about the CLI, and more time doing anything else
+* This dosen't solve all the problems, we still need documented conventions for things like using `web` `gem` or `app` as service names
+
+---
+template: inverse
+class: center, middle, inverse
+# What's New With Docker
+
+.white[
+Updates from the Docker [Changelog](https://github.com/docker/docker/blob/master/CHANGELOG.md) (by no means comprehensive)
+]
+
+---
+template: inverse
+class: center, middle, inverse
+
+.white[
+1.13.0 (2017-01-18)
+]
+
+---
+# Builder
+
+* Add capability to specify images used as a cache source on build. These images do not need to have local parent chain and can be pulled from other registries [#26839](https://github.com/docker/docker/pull/26839)
+* (experimental) Add option to squash image layers to the FROM image after successful builds [#22641](https://github.com/docker/docker/pull/22641)
+* Add step number on `docker build` [#24978](https://github.com/docker/docker/pull/24978)
+* Add support for compressing build context during image build [#25837](https://github.com/docker/docker/pull/25837)
+* add `--network` to `docker build` [#27702](https://github.com/docker/docker/pull/27702)
+
+???
+
+`docker build`:
+
+* `--cache-from`: you have to pre pull the image you're using for the cache-from and if you have multiple `--cache-from` only the first one that has a 'cache hit' is used
+* `--squash`: docker creates a new image loading the diffs from each layer into a single new layer and references all the parent's layers
+* `--compres` Added support for optionally compressing build contexts when invoking docker build (contexts is the host local stuff being sent to the daemon)
+
+---
+# Logging
+
+* Update of AWS log driver to support tags [#27707](https://github.com/docker/docker/pull/27707)
+  * This enables support for things like `--log-opt tag="{{.ImageName}}/{{.Name}}/{{.ID}}"` as a tag for CloudWatch
+
+---
+# Networking
+
+* Add `--attachable` network support to enable `docker run` to work in swarm-mode overlay network [#25962](https://github.com/docker/docker/pull/25962)
+* Add support for host port PublishMode in services using the `--publish` option in `docker service create` [#27917](https://github.com/docker/docker/pull/27917) and [#28943](https://github.com/docker/docker/pull/28943)
+* Add creation timestamp to `docker network inspect` [#26130](https://github.com/docker/docker/pull/26130)
+* Show peer nodes in `docker network inspect` for swarm overlay networks [#28078](https://github.com/docker/docker/pull/28078)
+* Enable ping for service VIP address [#28019](https://github.com/docker/docker/pull/28019)
+
+---
+# Plugins
+
+* Move plugins out of experimental [#28226](https://github.com/docker/docker/pull/28226)
+  * https://docs.docker.com/engine/extend/
+* Add `docker plugin create` command [#28164](https://github.com/docker/docker/pull/28164)
+
+???
+
+* A plugin is a process intended to extend the functionality of the docker engine
+* Currently the `docker plugin` CLI for start stop remove install only works with volume plugins
+
+---
+# Remote API (v1.25) & Client
+
+* Support `docker stack deploy` from a Compose file [#27998](https://github.com/docker/docker/pull/27998)
+* (experimental) Implement checkpoint and restore [#22049](https://github.com/docker/docker/pull/22049)
+  * **CRIU!**
+* Remove `--name` from `docker volume create` [#23830](https://github.com/docker/docker/pull/23830)
+* Add `docker stack ls` [#23886](https://github.com/docker/docker/pull/23886)
+* Add `--env-file` flag to `docker service create` [#24844](https://github.com/docker/docker/pull/24844)
+* Add `--group` in `docker service create` [#25317](https://github.com/docker/docker/pull/25317)
+
+???
+
+* Stack deploy from a compose file!, remember when docker was doing the dab (docker application bundle)
+
+---
+# Remote API (v1.25) & Client (Contd)
+
+* Allow the top-level `docker inspect` command to inspect any kind of resource [#23614](https://github.com/docker/docker/pull/23614)
++ Add --cpus flag to control cpu resources for `docker run` and `docker create`, and add `NanoCPUs` to `HostConfig` [#27958](https://github.com/docker/docker/pull/27958)
+- Allow unsetting the `--entrypoint` in `docker run` or `docker create` [#23718](https://github.com/docker/docker/pull/23718)
+* Restructure CLI commands by adding `docker image` and `docker container` commands for more consistency [#26025](https://github.com/docker/docker/pull/26025)
+- Remove `COMMAND` column from `service ls` output [#28029](https://github.com/docker/docker/pull/28029)
++ Add `--dns-option` to `docker run` [#28186](https://github.com/docker/docker/pull/28186)
+
+---
+# Format All the Things (Remote API/Plugins)
+
++ Add `--format` flag to `docker info` [#23808](https://github.com/docker/docker/pull/23808)
++ Add `--format` flag to `network ls` and `volume ls` [#23475](https://github.com/docker/docker/pull/23475)
++ Add `--format` on `docker stats` [#24987](https://github.com/docker/docker/pull/24987)
++ Add `--format` to `docker events` [#26268](https://github.com/docker/docker/pull/26268)
++ Add `-f`/`--format` to `docker plugin inspect` [#25990](https://github.com/docker/docker/pull/25990)
+
+---
+# Runtime
+
+* Add `--experimental` daemon flag to enable experimental features, instead of shipping them in a separate build [#27223](https://github.com/docker/docker/pull/27223)
+* Add a new daemon flag `--userland-proxy-path` to allow configuring the userland proxy instead of using the hardcoded `docker-proxy` from `$PATH` [#26882](https://github.com/docker/docker/pull/26882)
+* Add boolean flag `--init` on `dockerd` and on `docker run` to use [tini](https://github.com/krallin/tini) a zombie-reaping init process as PID 1 [#26061](https://github.com/docker/docker/pull/26061) [#28037](https://github.com/docker/docker/pull/28037)
+* Improve reliability of `docker run --rm` by moving it from the client to the daemon  [#20848](https://github.com/docker/docker/pull/20848)
+* Allow parallel stop, pause, unpause [#24761](https://github.com/docker/docker/pull/24761) / [#26778](https://github.com/docker/docker/pull/26778)
+* Allow engine to run inside a user namespace [#25672](https://github.com/docker/docker/pull/25672)
+
+---
+# Runtime (Contd)
+
+* (experimental) Add metrics (Prometheus) output for basic `container`, `image`, and `daemon` operations [#25820](https://github.com/docker/docker/pull/25820)
+* Add new `docker system` command with `df` and `prune` subcommands for system resource management, as well as `docker {container,image,volume,network} prune` subcommands [#26108](https://github.com/docker/docker/pull/26108) [#27525](https://github.com/docker/docker/pull/27525) / [#27525](https://github.com/docker/docker/pull/27525)
+* Promote overlay(2) graphdriver [#27932](https://github.com/docker/docker/pull/27932)
+* Add `--seccomp-profile` daemon flag to specify a path to a seccomp profile that overrides the default [#26276](https://github.com/docker/docker/pull/26276)
+* Add `TERM` environment variable on `docker exec -t` [#26461](https://github.com/docker/docker/pull/26461)
+* Honor a container’s `--stop-signal` setting upon `docker kill` [#26464](https://github.com/docker/docker/pull/26464)
+
+---
+# Swarm Mode
+
+* Add secret management [#27794](https://github.com/docker/docker/pull/27794)
+* Add support for templating service options (hostname, mounts, and environment variables) [#28025](https://github.com/docker/docker/pull/28025)
+* Add support for health aware load balancing and DNS records [#27279](https://github.com/docker/docker/pull/27279)
+* (experimental) Add `docker service logs` command to view logs for a service [#28089](https://github.com/docker/docker/pull/28089)
+
+---
+# Service Create Options (Swarm Mode)
+
+* Add `--dns`, -`-dns-opt`, and `--dns-search` to service create. [#27567](https://github.com/docker/docker/pull/27567)
+* Add `--health-*` and `--no-healthcheck` flags to `docker service create` and `docker service update` [#27369](https://github.com/docker/docker/pull/27369)
+* Add `--host` to `docker service create`, and `--host-add`, `--host-rm` to `docker service update` [#28031](https://github.com/docker/docker/pull/28031)
+* Add `--hostname` to `docker service create` [#27857](https://github.com/docker/docker/pull/27857)
+* Add `--tty` flag to `docker service create`/`update` [#28076](https://github.com/docker/docker/pull/28076)
+
+---
+# Volume
+
+* Add support for labels on volumes [#21270](https://github.com/docker/docker/pull/21270)
+* Add support for filtering volumes by label [#25628](https://github.com/docker/docker/pull/25628)
+* Add a `--force` flag in `docker volume rm` to forcefully purge the data of the volume that has already been deleted [#23436](https://github.com/docker/docker/pull/23436)
+* Enhance `docker volume inspect` to show all options used when creating the volume [#26671](https://github.com/docker/docker/pull/26671)
+* Add support for local NFS volumes to resolve hostnames [#27329](https://github.com/docker/docker/pull/27329)
+
+---
+template: inverse
+class: center, middle, inverse
+
+.white[
+1.13.1 (2017-02-08)
+]
+
+---
+# Swarm Mode
+
+* Support secrets in docker stack deploy with compose file [#30144](https://github.com/docker/docker/pull/30144)
+
+???
+
+* For now we can only use this to provide secrets to `docker services`
+
+---
+template: inverse
+class: center, middle, inverse
+
+# What's New With Compose
+
+.white[
+Updates from the Compose [Changelog](https://github.com/docker/compose/blob/master/CHANGELOG.md) (by no means comprehensive)
+]
+---
+
+#  File Format v3 - 1.10.0 (2017-01-18)
+From the docs:
+
+Removed:
+  * `volume_driver`
+  * `volumes_from`
+  * `cpu_shares`
+  * `cpu_quota`
+  * `cpuset`
+  * `mem_limit`
+  * `memswap_limit`
+
+These have been replaced by the resources key under deploy
+
+Added
+  * `deploy`
+
+???
+
+* Compose v3 is the first version designed to be cross-compatible between Compose and the Docker Engine’s swarm mode
+* Deploy configuration only takes effect when using docker stack deploy, and is ignored by docker-compose.
+
+---
+# File Format v3.1 - 1.11.0 (2017-02-08)
+
+* Introduces support for secrets
+
+---
+template: inverse
+class: center, middle, inverse
+
+#Questions
+    </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
     </script>
     <script>
-      var slideshow = remark.create({
-        sourceUrl: 'standardizing-development-with-compose.md'
-      });
+      var slideshow = remark.create();
     </script>
   </body>
 </html>
